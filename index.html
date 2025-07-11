@@ -67,8 +67,8 @@
   </div>
 
   <div>
-  <button id="takePhotoBtn">Foto machen</button>
-  <button id="uploadBtn" disabled>Hochladen</button>
+  <button id="takePhotoBtn">📸 Foto machen</button>
+  <button id="uploadBtn" disabled>⬆️ Hochladen</button>
   </div>
     
   <img id="photo" alt="Aufgenommenes Foto" />
@@ -176,7 +176,7 @@
         throw new Error(error.error_summary || 'Unbekannter Fehler');
       }
 
-      message.textContent = 'Bild erfolgreich hochgeladen. Danke!';
+      message.textContent = 'Bild erfolgreich hochgeladen. Danke!🎉';
 
       // Bild nach Upload zurücksetzen
       photo.src = '';
