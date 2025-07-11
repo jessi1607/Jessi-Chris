@@ -13,7 +13,7 @@
     display: flex; flex-direction: column; align-items: center;
   }
   h1 {
-    color: #2a4d2a; /* dunkles grün */
+    color: #9caf88; /* salbeigrün */
     font-size: 2.5rem;
     margin-bottom: 0;
   }
@@ -24,7 +24,7 @@
     width: 95vw;
     max-width: 700px;
     aspect-ratio: 4 / 3;
-    border: 4px solid #2a4d2a;
+    border: 4px solid #9caf88; /* salbeigrün */
     border-radius: 10px;
     overflow: hidden;
     margin-top: 20px;
@@ -67,20 +67,22 @@
     margin: 15px 0 10px;
   }
   button {
-    background-color: #2a4d2a;
-    color: white;
-    border: none;
+    background-color: #9caf88; /* salbeigrün */
+    color: #2a4d2a;            /* dunkles grün Text */
+    border: 2px solid #9caf88; /* Rahmen salbeigrün */
     border-radius: 6px;
     padding: 12px 20px;
     font-size: 1rem;
     cursor: pointer;
     font-weight: bold;
-    box-shadow: 0 2px 5px rgba(161, 124, 0, 0.6);
-    transition: background-color 0.3s ease;
+    box-shadow: 0 2px 5px rgba(156, 175, 136, 0.6);
+    transition: background-color 0.3s ease, color 0.3s ease;
     min-width: 120px;
   }
   button:hover {
-    background-color: #8c6700;
+    background-color: #7c8f67; /* dunkleres Salbeigrün beim Hover */
+    color: white;
+    border-color: #7c8f67;
   }
   #message {
     margin-top: 15px;
@@ -252,45 +254,33 @@
         body: capturedImageBlob
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error_summary || 'Unbekannter Fehler');
+      if (response.ok) {
+        message.style.color = '#2a4d2a';
+        message.textContent = 'Bild erfolgreich hochgeladen! Danke!';
+      } else {
+        const errData = await response.json();
+        throw new Error(errData.error_summary || 'Unbekannter Fehler');
       }
-
-      message.textContent = 'Bild erfolgreich hochgeladen. Danke!🎉';
-
-      photo.style.display = 'none';
-      video.style.display = 'block';
-      photo.src = '';
-      capturedImageBlob = null;
-      document.getElementById('uploadBtn').disabled = true;
-      document.getElementById('saveBtn').disabled = true;
-
     } catch (error) {
-      console.error('Upload-Fehler:', error);
-      message.textContent = 'Fehler beim Hochladen: ' + error.message;
+      message.style.color = 'red';
+      message.textContent = 'Fehler beim Upload: ' + error.message;
+      console.error('Upload Error:', error);
     }
   });
 
   document.getElementById('saveBtn').addEventListener('click', () => {
     if (!capturedImageBlob) {
-      message.textContent = 'Kein Bild zum Speichern vorhanden.';
+      message.textContent = 'Bitte erst ein Foto machen oder auswählen.';
       return;
     }
-    const url = URL.createObjectURL(capturedImageBlob);
     const a = document.createElement('a');
-    a.href = url;
+    a.href = URL.createObjectURL(capturedImageBlob);
     a.download = `JessiChris_${Date.now()}.jpg`;
-    document.body.appendChild(a);
     a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-    message.textContent = 'Bild wurde gespeichert.';
   });
 
-  // Starte mit Frontkamera
+  // Starte Kamera direkt mit Frontkamera (optional)
   startCamera('user');
 </script>
 </body>
 </html>
-
