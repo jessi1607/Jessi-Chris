@@ -68,6 +68,8 @@
 
   <div>
   <button id="takePhotoBtn">📸 Foto machen</button>
+  <button id="galleryBtn">🖼️ Bild aus Galerie hochladen</button>
+  <input type="file" id="galleryInput" accept="image/*" style="display:none;">
   <button id="uploadBtn" disabled>⬆️ Hochladen</button>
   </div>
     
@@ -191,6 +193,51 @@
 
   // Starte standardmäßig mit Frontkamera
   startCamera('user');
+
+    document.getElementById('galleryBtn').addEventListener('click', () => {
+    document.getElementById('galleryInput').click();
+  });
+
+  document.getElementById('galleryInput').addEventListener('change', async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    message.textContent = 'Lade Bild aus Galerie hoch...';
+
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const filename = `JessiChris_Galerie_${Date.now()}_${file.name}`;
+
+      const response = await fetch('https://content.dropboxapi.com/2/files/upload', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${DROPBOX_ACCESS_TOKEN}`,
+          'Dropbox-API-Arg': JSON.stringify({
+            path: '/' + filename,
+            mode: 'add',
+            autorename: true,
+            mute: false
+          }),
+          'Content-Type': 'application/octet-stream'
+        },
+        body: arrayBuffer
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error_summary || 'Unbekannter Fehler beim Galerie-Upload');
+      }
+
+      message.textContent = 'Galeriebild erfolgreich hochgeladen! 🎉';
+    } catch (error) {
+      console.error('Galerie-Upload-Fehler:', error);
+      message.textContent = 'Fehler beim Hochladen aus Galerie: ' + error.message;
+    } finally {
+      // Galerie-Auswahl zurücksetzen
+      event.target.value = '';
+    }
+  });
+
 </script>
 </body>
 </html>
