@@ -13,7 +13,7 @@
     display: flex; flex-direction: column; align-items: center;
   }
   h1 {
-    color: #2a4d2a; /* dunkles grün */
+    color: #2a4d2a;
     font-size: 2.5rem;
     margin-bottom: 0;
   }
@@ -22,6 +22,10 @@
     border-radius: 10px;
     max-width: 100vw;
     height: auto;
+    /* Spiegelung nur bei Frontkamera */
+  }
+  video.front {
+    transform: scaleX(-1);
   }
   canvas {
     display: none;
@@ -54,6 +58,9 @@
     color: #a17c00;
     min-height: 1.5em;
   }
+  #fileInput {
+    display: none;
+  }
 </style>
 </head>
 <body>
@@ -65,6 +72,8 @@
   <div>
     <button id="frontBtn">Frontkamera</button>
     <button id="backBtn">Rückkamera</button>
+    <button id="chooseFromGalleryBtn">📁 Bild aus Galerie</button>
+    <input type="file" id="fileInput" accept="image/*" />
   </div>
 
   <div>
@@ -85,6 +94,8 @@
 
   const uploadBtn = document.getElementById('uploadBtn');
   const saveBtn = document.getElementById('saveBtn');
+  const fileInput = document.getElementById('fileInput');
+  const chooseFromGalleryBtn = document.getElementById('chooseFromGalleryBtn');
 
   let currentStream = null;
   let currentFacingMode = 'user'; // 'user' = front, 'environment' = back
@@ -101,13 +112,18 @@
       });
       video.srcObject = currentStream;
       currentFacingMode = facingMode;
+      // Spiegelung nur bei Frontkamera
+      if (facingMode === 'user') {
+        video.classList.add('front');
+      } else {
+        video.classList.remove('front');
+      }
       message.textContent = '';
       uploadBtn.disabled = true;
       saveBtn.disabled = true;
       photo.src = '';
       capturedImageBlob = null;
     } catch (err) {
-      // Fallback: ohne exact (bei manchen Browsern besser)
       try {
         currentStream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: facingMode },
@@ -115,6 +131,11 @@
         });
         video.srcObject = currentStream;
         currentFacingMode = facingMode;
+        if (facingMode === 'user') {
+          video.classList.add('front');
+        } else {
+          video.classList.remove('front');
+        }
         message.textContent = '';
         uploadBtn.disabled = true;
         saveBtn.disabled = true;
@@ -130,6 +151,29 @@
   document.getElementById('frontBtn').addEventListener('click', () => startCamera('user'));
   document.getElementById('backBtn').addEventListener('click', () => startCamera('environment'));
 
+  // Öffne Galerie-Auswahl
+  chooseFromGalleryBtn.addEventListener('click', () => {
+    fileInput.click();
+  });
+
+  fileInput.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (!file) {
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      message.textContent = 'Bitte eine Bilddatei auswählen.';
+      return;
+    }
+    capturedImageBlob = file;
+    photo.src = URL.createObjectURL(file);
+    message.textContent = 'Bild aus Galerie ausgewählt. Jetzt Hochladen oder Speichern klicken.';
+    uploadBtn.disabled = false;
+    saveBtn.disabled = false;
+    // Kamera-Video verstecken, da Galerie-Bild angezeigt wird
+    video.style.display = 'none';
+  });
+
   document.getElementById('takePhotoBtn').addEventListener('click', () => {
     if (!currentStream) {
       message.textContent = 'Bitte erst Kamera auswählen.';
@@ -140,19 +184,30 @@
     canvas.width = width;
     canvas.height = height;
     const ctx = canvas.getContext('2d');
+    // Wenn Frontkamera, spiegel das Bild, sonst nicht
+    if (currentFacingMode === 'user') {
+      ctx.translate(width, 0);
+      ctx.scale(-1, 1);
+    }
     ctx.drawImage(video, 0, 0, width, height);
+    // Reset Transformation für Sicherheit
+    if (currentFacingMode === 'user') {
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+    }
     canvas.toBlob(blob => {
       capturedImageBlob = blob;
       photo.src = URL.createObjectURL(blob);
       uploadBtn.disabled = false;
       saveBtn.disabled = false;
       message.textContent = 'Foto aufgenommen. Jetzt Hochladen oder Speichern klicken.';
+      // Kamera-Video ausblenden, Bild anzeigen
+      video.style.display = 'none';
     }, 'image/jpeg', 0.95);
   });
 
   uploadBtn.addEventListener('click', async () => {
     if (!capturedImageBlob) {
-      message.textContent = 'Bitte erst ein Foto machen.';
+      message.textContent = 'Bitte erst ein Foto machen oder auswählen.';
       return;
     }
 
@@ -191,7 +246,8 @@
       capturedImageBlob = null;
       uploadBtn.disabled = true;
       saveBtn.disabled = true;
-
+      // Kamera wieder anzeigen
+      video.style.display = '';
     } catch (error) {
       console.error('Upload-Fehler:', error);
       message.textContent = 'Fehler beim Hochladen: ' + error.message;
@@ -200,7 +256,7 @@
 
   saveBtn.addEventListener('click', () => {
     if (!capturedImageBlob) {
-      message.textContent = 'Bitte erst ein Foto machen.';
+      message.textContent = 'Bitte erst ein Foto machen oder auswählen.';
       return;
     }
     // Lokalen Download erzwingen
@@ -215,7 +271,7 @@
     message.textContent = 'Bild wurde auf dem Gerät gespeichert.';
   });
 
-  // Starte standardmäßig mit Frontkamera (optional, siehe Wunsch)
+  // Starte Kamera standardmäßig nicht automatisch, aber du kannst das hier aktivieren:
   // startCamera('user');
 </script>
 </body>
