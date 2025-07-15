@@ -8,17 +8,16 @@
   body {
     background: white;
     font-family: 'Georgia', serif;
-    color: #2a4d2a; /* dunkles grün */
+    color: #2a4d2a;
     margin: 0; padding: 20px;
     display: flex; flex-direction: column; align-items: center;
   }
   h1 {
-    color: #9caf88; /* salbeigrün */
+    color: #9caf88;
     font-size: 2.5rem;
     margin-bottom: 0;
   }
 
-  /* Container ohne Rahmen */
   #cameraContainer {
     position: relative;
     width: 95vw;
@@ -34,7 +33,6 @@
     justify-content: center;
   }
 
-  /* Video und Foto füllen Container, liegen übereinander */
   video, #photo {
     width: 100%;
     height: 100%;
@@ -44,31 +42,49 @@
     top: 0; left: 0;
   }
   video {
-    transform: scaleX(-1); /* Frontkamera spiegeln */
+    transform: scaleX(-1);
     z-index: 5;
     display: block;
   }
   #photo {
-    transform: none !important;
     z-index: 10;
-    display: none; /* Foto zuerst verstecken */
+    display: none;
   }
 
   #canvas {
     display: none;
   }
 
-  #buttonRow {
+  .buttonRow {
     display: flex;
-    gap: 15px;
-    justify-content: center;
     flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
     margin: 15px 0 10px;
+    width: 100%;
+    max-width: 700px;
   }
+
+  #photoButtons {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+    gap: 10px;
+    margin: 15px 0 10px;
+    width: 100%;
+    max-width: 700px;
+  }
+
+  #photoButtons button {
+    flex: 1 1 0;
+    min-width: 0;
+    white-space: nowrap;
+  }
+
   button {
-    background-color: #9caf88; /* salbeigrün */
-    color: #2a4d2a;            /* dunkles grün Text */
-    border: 2px solid #9caf88; /* Rahmen salbeigrün */
+    background-color: #9caf88;
+    color: #2a4d2a;
+    border: 2px solid #9caf88;
     border-radius: 6px;
     padding: 12px 20px;
     font-size: 1rem;
@@ -78,17 +94,20 @@
     transition: background-color 0.3s ease, color 0.3s ease;
     min-width: 120px;
   }
+
   button:hover {
-    background-color: #7c8f67; /* dunkleres Salbeigrün beim Hover */
+    background-color: #7c8f67;
     color: white;
     border-color: #7c8f67;
   }
+
   #message {
     margin-top: 15px;
     font-weight: bold;
     color: #a17c00;
     min-height: 1.2em;
   }
+
   input[type="file"] {
     display: none;
   }
@@ -103,17 +122,17 @@
   </div>
   <canvas id="canvas"></canvas>
 
-  <div id="buttonRow">
+  <div class="buttonRow">
     <button id="frontBtn">Frontkamera</button>
     <button id="backBtn">Rückkamera</button>
   </div>
 
-  <div id="buttonRow">
+  <div id="photoButtons">
     <button id="takePhotoBtn">📸 Foto machen</button>
     <button id="selectImageBtn">🖼 Bild aus Galerie</button>
   </div>
 
-  <div id="buttonRow">  
+  <div class="buttonRow">  
     <button id="uploadBtn" disabled>⬆️ Hochladen</button>
     <button id="saveBtn" disabled>💾 Speichern</button>
   </div>
@@ -130,7 +149,7 @@
   const fileInput = document.getElementById('fileInput');
 
   let currentStream = null;
-  let currentFacingMode = 'user'; // 'user' = front, 'environment' = back
+  let currentFacingMode = 'user';
   let capturedImageBlob = null;
 
   async function startCamera(facingMode) {
@@ -143,14 +162,6 @@
         audio: false
       });
       video.srcObject = currentStream;
-      currentFacingMode = facingMode;
-      message.textContent = '';
-      photo.style.display = 'none';    // Foto ausblenden, Kamera zeigen
-      video.style.display = 'block';
-      document.getElementById('uploadBtn').disabled = true;
-      document.getElementById('saveBtn').disabled = true;
-      photo.src = '';
-      capturedImageBlob = null;
     } catch (err) {
       try {
         currentStream = await navigator.mediaDevices.getUserMedia({
@@ -158,19 +169,20 @@
           audio: false
         });
         video.srcObject = currentStream;
-        currentFacingMode = facingMode;
-        message.textContent = '';
-        photo.style.display = 'none';
-        video.style.display = 'block';
-        document.getElementById('uploadBtn').disabled = true;
-        document.getElementById('saveBtn').disabled = true;
-        photo.src = '';
-        capturedImageBlob = null;
       } catch (error) {
         console.error('Kamera konnte nicht gestartet werden:', error);
-        message.textContent = 'Kamera konnte nicht gestartet werden. Bitte überprüfe die Berechtigungen.';
+        message.textContent = 'Kamera konnte nicht gestartet werden.';
+        return;
       }
     }
+    currentFacingMode = facingMode;
+    message.textContent = '';
+    photo.style.display = 'none';
+    video.style.display = 'block';
+    document.getElementById('uploadBtn').disabled = true;
+    document.getElementById('saveBtn').disabled = true;
+    photo.src = '';
+    capturedImageBlob = null;
   }
 
   document.getElementById('frontBtn').addEventListener('click', () => startCamera('user'));
@@ -193,7 +205,6 @@
     }
 
     ctx.drawImage(video, 0, 0, width, height);
-
     if (currentFacingMode === 'user') {
       ctx.setTransform(1, 0, 0, 1, 0, 0);
     }
@@ -201,8 +212,8 @@
     canvas.toBlob(blob => {
       capturedImageBlob = blob;
       photo.src = URL.createObjectURL(blob);
-      photo.style.display = 'block';   // Foto zeigen
-      video.style.display = 'none';    // Kamera ausblenden
+      photo.style.display = 'block';
+      video.style.display = 'none';
       document.getElementById('uploadBtn').disabled = false;
       document.getElementById('saveBtn').disabled = false;
       message.textContent = 'Foto aufgenommen. Jetzt Hochladen oder Speichern klicken.';
@@ -215,16 +226,14 @@
 
   fileInput.addEventListener('change', () => {
     const file = fileInput.files[0];
-    if (!file) {
-      return;
-    }
+    if (!file) return;
     capturedImageBlob = file;
     photo.src = URL.createObjectURL(file);
-    photo.style.display = 'block';    // Bild anzeigen
-    video.style.display = 'none';     // Kamera ausblenden
+    photo.style.display = 'block';
+    video.style.display = 'none';
     document.getElementById('uploadBtn').disabled = false;
     document.getElementById('saveBtn').disabled = false;
-    message.textContent = 'Bild aus Galerie ausgewählt. Jetzt Hochladen oder Speichern klicken.';
+    message.textContent = 'Bild ausgewählt. Jetzt Hochladen oder Speichern klicken.';
   });
 
   document.getElementById('uploadBtn').addEventListener('click', async () => {
@@ -232,12 +241,9 @@
       message.textContent = 'Bitte erst ein Foto machen oder auswählen.';
       return;
     }
-
     message.textContent = 'Lade Bild hoch...';
 
-    // Dropbox Access Token hier einfügen:
     const DROPBOX_ACCESS_TOKEN = 'sl.u.AF28JNiUxkKlvUSQlmasWQV4D8waexZMGMnF0kIoqAP5yEK7Vb2M6Bdqg1zgvY02wq-BmbmxWser3tSN-6LyLYfuZmPyPGW-kBNi1Nq0m0qlixLkj6hHHD30saXHyre3eVfo45xRlhpR6kkLO8DS2djj09HMemSD_cswFln565tAK7BQ4tmOvmxLgjpYLjyW1qFLqhxfYJsrXD45EilPG7fuF7i6fB5Ov1DyrA5tmHgxXuWPrGUTFzLae1Hxm_16e-WCDht3zduofb7PhSwn-4h8lgxdcJhN9V6-S9tfTIPBhehCjbqnBd4NTCfc0TMTKDiqR6KSw0uzYo15JXMmr-UQqTsSXRdCvDfoD18CUhP4CA8Ky6JWVFTiPmLRc2hvpbcXGURKLAira3dLrY7QuRD4tClhPLBPg6SvMz2hb7GSf6dcZc2VrdNQzQN8jtyTIOb32C9EaslvgKSl63D_-xm-G_6oPxainRZfvyJq_CeBagGEDU6d83VNrsWpdsm0PKj-01RKcfPr3HNhylXpDonH7baVpuhazO90EZvsV30O42W0MdL7EwmEO-sswIqVbJnlFO5dRZvNgZnItzxBmBtFYySBn4IwO_bHk7-pP97csaFUO8bCv5ZYOXC4dwzXJJBxPVwWxBOiI6pf9KHS1YPjv9chdBuWsl2rnfs5079m14C2qiWAf97ezirI5Bo0KP9zXlI2Dyd-8jGO71pds4Q7HLzqW9Xw2YkwVbALif-970AUw6ls-zre_FIjav49GrqZl7oVjAygjfpnEiU3vE1lrf7Ey0UOydVZLDOdmerdxQD-AWNg0NkI7CM2SO251RQb3qBgYB1EUdSK78SSKTeuRsJoNl8MppQUcnRt0B30GT73mi3tLs1MMAjdi3HnJTVjmq4NqxSVAb2fheMwzCbl0BSboX_LCxS6HqxioV5JMpbGdmLA_CBuviXo6zLBz2YoJAQNd6yCHzx_JU0ZoV6rrJxdMKTxnlzcloRYW6G4HS6uaRad1kjo78hKpftTKyHRal1QOeeoNMN_2dikCwMBM6jM2BT_6kO_Qb3o7O6XOdkOcMef8lFQs3uYWYRqRedNcnwuzcPFAB9hAfCysRCT5uDTAPHEY322C6paAyeETMGaFEZQ9WmggZspFM54bmCycjsa5UEceQIJVW7FdFpClX8viOkHLgMyaZaMlZhCr6ppdbsEs4B5womya0-m2KlYYC1KtpCL4Irt-Gchprjxhz3NG5EMxXnkkpLddDFGv8c3osd8QPRqV3lV3QF_CtD9IyOmhBBY4_g_GGYhdo8kDJ3U-J-g9qL-OEKwUkhsSA';
-
     const filename = `JessiChris_${Date.now()}.jpg`;
 
     try {
@@ -266,7 +272,6 @@
     } catch (error) {
       message.style.color = 'red';
       message.textContent = 'Fehler beim Upload: ' + error.message;
-      console.error('Upload Error:', error);
     }
   });
 
@@ -281,7 +286,7 @@
     a.click();
   });
 
-  // Starte Kamera direkt mit Frontkamera (optional)
   startCamera('user');
 </script>
 </body>
+</html>
